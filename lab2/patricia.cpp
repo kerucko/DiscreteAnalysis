@@ -22,9 +22,7 @@ void AddVariant(Node** root, char* name, unsigned long long value) {
     }
     if (*root == NULL) {
         *root = (Node*)malloc(sizeof(Node));
-        // root->name = (char*)malloc(sizeof(char) * (strlen(name) + 1));
         (*root)->name = name;
-        // root->name[strlen(name)] = '\0';
         (*root)->index = -1;
         (*root)->value = value;
         (*root)->left = (*root);
@@ -87,10 +85,6 @@ bool RemoveVariant(Node** root, char* name) {
     if (StringLower(name) == -1) {
         return false;
     }
-    Node* find = FindVariant(*root, name);
-    if (strcmp(find->name, name) != 0) {
-        return false;
-    }
     if ((*root)->left == *root) {
         if (strcmp((*root)->name, name) == 0) {
             free(*root);
@@ -100,11 +94,16 @@ bool RemoveVariant(Node** root, char* name) {
             return false;
         }
     } 
+    
 
+    return false;
 }
 
 
 int CheckIndex(char* name, int index) {
+    if (index == -1) {
+        return 0;
+    }
     int symbol = name[index / 7];
     return (symbol >> (6 - index % 7)) & 1;
 }
@@ -126,8 +125,6 @@ Node* FindVariant(Node* root, char* name) {
     Node* current = root->left;
     int previous_index = -1;
     while (current->index > previous_index) {
-        // printf("current:\n");
-        // PrintNode(current);
         previous_index = current->index;
         if(CheckIndex(name, current->index)) {
             current = current->right;
@@ -135,13 +132,7 @@ Node* FindVariant(Node* root, char* name) {
             current = current->left;
         }
     }
-    // printf("STOP: %d %d\n", previous_index, current->index);
     return current;
-}
-
-
-Node* FindValue(Node* root, unsigned long long value) {
-
 }
 
 
@@ -169,4 +160,23 @@ void PrintPatricia(Node* root, int previous_index) {
         PrintPatricia(root->left, root->index);
         PrintPatricia(root->right, root->index);
     }
+}
+
+void Clear(Node* root, int previous_index) {
+    if (root->index > previous_index) {
+        Clear(root->left, root->index);
+        Clear(root->right, root->index);
+        free(root->name);
+        free(root);
+    }
+}
+
+
+void SaveInFile(Node* root, char* filename) {
+
+}
+
+
+void LoadFromFile(Node* root, char* filename) {
+
 }
