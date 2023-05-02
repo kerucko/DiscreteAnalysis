@@ -1,6 +1,8 @@
 #include "patricia.hpp"
 #include <iostream>
 #include <cstring>
+#include <fstream>
+
 
 using namespace std;
 
@@ -172,11 +174,43 @@ void Clear(Node* root, int previous_index) {
 }
 
 
-void SaveInFile(Node* root, char* filename) {
+void SaveInFile(Node* current, ofstream &file) {
+    if (!file) {
+        perror("ERROR");
+    }
+    if (current == NULL) {
+        return;
+    }
+    int size = strlen(current->name);
 
+    file.write((char*)(&size), sizeof(int));
+    file.write(current->name, size * sizeof(char)); 
+    file.write((char*)(&current->value), sizeof(unsigned long long));
+
+    if (current->left->index > current->index) {
+        SaveInFile(current->left, file);
+    }
+    if (current->right->index > current->index) {
+        SaveInFile(current->right, file);
+    }
 }
 
 
-void LoadFromFile(Node* root, char* filename) {
-
+void LoadFromFile(Node** root, ifstream &file) {
+    if (!file) {
+        perror("ERROR");
+    }
+    Clear(*root, -2);
+    *root = NULL;
+    
+    int size;
+    while(file.read((char*)(&size), sizeof(int))) {
+        char* name = (char*)malloc(sizeof(char) * (size + 1));
+        unsigned long long value;
+        file.read(name, size);
+        file.read((char*)(&value), sizeof(unsigned long long));
+        name[size] = '\0';
+        printf("%s %lld\n", name, value);
+        AddVariant(root, name, value);
+    }
 }

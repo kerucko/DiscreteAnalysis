@@ -1,6 +1,7 @@
 #include "patricia.hpp"
 #include <iostream>
 #include <cstring>
+#include <fstream>
 
 using namespace std;
 
@@ -54,10 +55,18 @@ int main() {
             char command[10];
             cin >> command;
             if (strcmp(command, "Save") == 0) {
-
+                char filename[100];
+                cin >> filename;
+                ofstream file(filename, ios::binary);
+                SaveInFile(root, file);
+                file.close();
             }
             else if (strcmp(command, "Load") == 0) {
-
+                char filename[100];
+                cin >> filename;
+                ifstream file(filename, ios::binary);
+                LoadFromFile(&root, file);
+                file.close();
             } 
             else {
                 //error

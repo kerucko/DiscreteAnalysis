@@ -1,4 +1,6 @@
-#include <stdlib.h>
+#include <fstream>
+
+using namespace std;
 
 struct Node {
     int index;
@@ -20,4 +22,5 @@ void PrintNode(Node *node);
 void PrintPatricia(Node* root, int previous_index);
 void Clear(Node* root, int previous_index);
 void SaveInFile(Node* root, char* filename);
-void LoadFromFile(Node* root, char* filename);
+void SaveInFile(Node* root, ofstream &file);
+void LoadFromFile(Node** root, ifstream &file);
