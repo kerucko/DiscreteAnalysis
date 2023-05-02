@@ -22,6 +22,7 @@ void AddVariant(Node** root, char* name, unsigned long long value) {
         printf("ERROR\n");
         return;
     }
+
     if (*root == NULL) {
         *root = (Node*)malloc(sizeof(Node));
         (*root)->name = name;
@@ -35,6 +36,7 @@ void AddVariant(Node** root, char* name, unsigned long long value) {
         insert_node->name = name;
         insert_node->value = value;
         insert_node->index = CompareNames(name, (*root)->name);
+
         if (CheckIndex(name, insert_node->index)) {
             insert_node->left = *root;
             insert_node->right = insert_node;
@@ -46,6 +48,7 @@ void AddVariant(Node** root, char* name, unsigned long long value) {
     }
     else {
         Node* find = FindVariant(*root, name);
+
         if (strcmp(find->name, name) == 0) {
             printf("already exist\n");
         }
@@ -54,6 +57,7 @@ void AddVariant(Node** root, char* name, unsigned long long value) {
             insert_node->name = name;
             insert_node->value = value;
             insert_node->index = CompareNames(name, find->name);
+
             Node* current = (*root)->left;
             Node* previous = *root;
             while (current->index > previous->index && current->index < insert_node->index) {
@@ -87,6 +91,7 @@ bool RemoveVariant(Node** root, char* name) {
     if (StringLower(name) == -1) {
         return false;
     }
+
     if ((*root)->left == *root) {
         if (strcmp((*root)->name, name) == 0) {
             free(*root);
@@ -106,6 +111,7 @@ int CheckIndex(char* name, int index) {
     if (index == -1) {
         return 0;
     }
+
     int symbol = name[index / 7];
     return (symbol >> (6 - index % 7)) & 1;
 }
@@ -126,6 +132,7 @@ int CompareNames(char* first, char* second) {
 Node* FindVariant(Node* root, char* name) {
     Node* current = root->left;
     int previous_index = -1;
+
     while (current->index > previous_index) {
         previous_index = current->index;
         if(CheckIndex(name, current->index)) {
@@ -137,32 +144,6 @@ Node* FindVariant(Node* root, char* name) {
     return current;
 }
 
-
-void Convertation(char* bin, int dec) {
-    for (int n = 6; n >= 0; --n) {
-        bin[n] = '0' + (dec >> (6 - n) & 1);
-    }
-    bin[7] = '\0';
-}
-
-
-void PrintNode(Node* node) {
-    printf("name: %s \t", node->name);
-    char bin[7];
-    Convertation(bin, node->name[0]);
-    printf("%s \t", bin);
-    printf("index: %d\tvalue: %lld\n", node->index, node->value);
-    printf("\tleft: %s\t\tright: %s\n", node->left->name, node->right->name);
-}
-
-
-void PrintPatricia(Node* root, int previous_index) {
-    if(root->index > previous_index) {
-        PrintNode(root);
-        PrintPatricia(root->left, root->index);
-        PrintPatricia(root->right, root->index);
-    }
-}
 
 void Clear(Node* root, int previous_index) {
     if (root->index > previous_index) {
@@ -207,10 +188,41 @@ void LoadFromFile(Node** root, ifstream &file) {
     while(file.read((char*)(&size), sizeof(int))) {
         char* name = (char*)malloc(sizeof(char) * (size + 1));
         unsigned long long value;
+
         file.read(name, size);
         file.read((char*)(&value), sizeof(unsigned long long));
         name[size] = '\0';
-        printf("%s %lld\n", name, value);
+
         AddVariant(root, name, value);
+    }
+}
+
+
+void Convertation(char* bin, int dec) {
+    for (int n = 6; n >= 0; --n) {
+        bin[n] = '0' + (dec >> (6 - n) & 1);
+    }
+    bin[7] = '\0';
+}
+
+
+void PrintNode(Node* node) {
+    printf("name: %s \t", node->name);
+    for (int i = 0; i < strlen(node->name); ++i) {
+        char bin[7];
+        Convertation(bin, node->name[i]);
+        printf("%s", bin);
+    }
+    printf(" \t");
+    printf("index: %d\tvalue: %lld\n", node->index, node->value);
+    printf("\tleft: %s\t\tright: %s\n", node->left->name, node->right->name);
+}
+
+
+void PrintPatricia(Node* root, int previous_index) {
+    if(root->index > previous_index) {
+        PrintNode(root);
+        PrintPatricia(root->left, root->index);
+        PrintPatricia(root->right, root->index);
     }
 }
