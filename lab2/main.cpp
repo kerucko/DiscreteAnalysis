@@ -6,62 +6,16 @@ using namespace std;
 
 
 int main() {
-    Node* root = NULL;
-    for (int i = 0; i < 5; ++i) {
-        char* name = (char*)malloc(256*sizeof(char));
-        int value;
-        scanf("%s %d", name, &value);
-        AddVariant(&root, name, value);
-    }
+    // Node* root = NULL;
+    // for (int i = 0; i < 5; ++i) {
+    //     char* name = (char*)malloc(256*sizeof(char));
+    //     int value;
+    //     scanf("%s %d", name, &value);
+    //     AddVariant(&root, name, value);
+    // }
 
-    PrintPatricia(root, -2);
-    // Node* a = (Node*)malloc(sizeof(Node));
-    // a->name = (char*)malloc(20 * sizeof(char));
-    // strcpy(a->name, "a");
-    // a->name[1] = '\0';
-    // a->value = 1;
-    // a->index = -1;
-    // Node *z = (Node*)malloc(sizeof(Node));
-    // z->name = (char*)malloc(20 * sizeof(char));
-    // strcpy(z->name, "z");
-    // z->name[1] = '\0';
-    // z->value = 2;
-    // z->index = 2;
-    // Node *d = (Node*)malloc(sizeof(Node));
-    // d->name = (char*)malloc(20 * sizeof(char));
-    // strcpy(d->name, "d");
-    // d->name[1] = '\0';
-    // d->value = 3;
-    // d->index = 4;
-    // Node *b = (Node*)malloc(sizeof(Node));
-    // b->name = (char*)malloc(20 * sizeof(char));
-    // strcpy(b->name, "b");
-    // b->name[1] = '\0';
-    // b->value = 4;
-    // b->index = 5;
-    // Node *f = (Node*)malloc(sizeof(Node));
-    // f->name = (char*)malloc(20 * sizeof(char));
-    // strcpy(f->name, "f");
-    // f->name[1] = '\0';
-    // f->value = 6;
-    // f->index = 5;
+    // PrintPatricia(root, -2);
 
-    // a->left = z;
-    // a->right = a;
-    // z->left = d;
-    // z->right = z;
-    // d->left = b;
-    // d->right = f;
-    // b->left = a;
-    // b->right = b;
-    // f->left = d;
-    // f->right = f;
-
-    // PrintPatricia(a, -2);
-
-    // Node* find = FindVariant(a, (char*)"d");
-    // printf("find:\n");
-    // PrintNode(find);
     
     // char a[] = "abce";
     // char b[] = "abqer";
@@ -80,33 +34,45 @@ int main() {
     // }
 
 
-    // Node* root{-1};
-    // char input;
-    // char name[300];
-    // unsigned long long value;
-    // while(scanf("%c", &input) != 0) {
-    //     if (input == '+') {
-    //         scanf("%s %lld", name, &value);
-    //     }
-    //     else if (input == '-') {
-    //         scanf("%s", name);
-    //     }
-    //     else if (input == '!') {
-    //         char command[10];
-    //         scanf("%s", command);
-    //         if (strcmp(command, "Save") == 0) {
+    Node* root = NULL;
+    char input[257];
+    char name[257];
+    unsigned long long value;
+    while(cin >> input) {
+        if (input[0] == '+') {
+            cin >> name >> value;
+            char* input_name = (char*)malloc(sizeof(char) * (strlen(name) + 1));
+            strcpy(input_name, name);
+            input_name[strlen(name)] = '\0';
+            AddVariant(&root, input_name, value);
+        }
+        else if (input[0] == '-') {
+            cin >> name;
+            RemoveVariant(&root, name);
+        }
+        else if (input[0] == '!') {
+            char command[10];
+            cin >> command;
+            if (strcmp(command, "Save") == 0) {
 
-    //         }
-    //         else if (strcmp(command, "Load") == 0) {
+            }
+            else if (strcmp(command, "Load") == 0) {
 
-    //         } 
-    //         else {
-    //             //error
-    //         }
-    //     }
-    //     else {
-    //         //error
-    //     }
-    // }
+            } 
+            else {
+                //error
+                printf("ERROR ! cmd\n");
+            }
+        }
+        else {
+            Node* find = FindVariant(root, input);
+            if (strcmp(find->name, input) == 0) {
+                printf("%lld\n", find->value);
+            } else {
+                printf("dont find\n");
+            }
+        }
+    }
+    Clear(root, -2);
     return 0;
 }
