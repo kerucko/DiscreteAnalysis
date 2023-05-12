@@ -17,10 +17,9 @@ int StringLower(char* string) {
     return 0;
 }
 
-void AddVariant(Node** root, char* name, unsigned long long value) {
+int AddVariant(Node** root, char* name, unsigned long long value) {
     if (StringLower(name) == -1) {
-        printf("ERROR\n");
-        return;
+        return 1;
     }
 
     if (*root == NULL) {
@@ -30,8 +29,12 @@ void AddVariant(Node** root, char* name, unsigned long long value) {
         (*root)->value = value;
         (*root)->left = (*root);
         (*root)->right = (*root);
+        return 0;
     } 
     else if ((*root)->left == *root) {
+        if (strcmp((*root)->name, name) == 0) {
+            return 2;
+        }
         Node* insert_node = (Node*)malloc(sizeof(Node));
         insert_node->name = name;
         insert_node->value = value;
@@ -45,12 +48,13 @@ void AddVariant(Node** root, char* name, unsigned long long value) {
             insert_node->left = insert_node;
         }
         (*root)->left = insert_node;
+        return 0;
     }
     else {
         Node* find = FindVariant(*root, name);
 
         if (strcmp(find->name, name) == 0) {
-            printf("already exist\n");
+            return 2;
         }
         else {
             Node* insert_node = (Node*)malloc(sizeof(Node));
@@ -82,6 +86,8 @@ void AddVariant(Node** root, char* name, unsigned long long value) {
             } else {
                 previous->left = insert_node;
             }
+
+            return 0;
         }
     }
 }
@@ -89,6 +95,10 @@ void AddVariant(Node** root, char* name, unsigned long long value) {
 
 bool RemoveVariant(Node** root, char* name) {
     if (StringLower(name) == -1) {
+        return false;
+    }
+
+    if (*root == NULL) {
         return false;
     }
 
@@ -101,9 +111,87 @@ bool RemoveVariant(Node** root, char* name) {
             return false;
         }
     } 
-    
 
-    return false;
+    Node* previous = *root;
+    Node* current = (*root)->left;
+    Node* preprevious = NULL;
+    
+    while (current->index > previous->index) {
+        preprevious = previous;
+        previous = current;
+
+        if (CheckIndex(name, current->index)) {
+            current = current->right;
+        } else {
+            current = current->left;
+        }
+    }
+
+    if (strcmp(current->name, name) != 0) {
+        return false;
+    } 
+
+    if (previous == current) {
+        if (preprevious->right == current) {
+            if (current->right == current) {
+                preprevious->right = current->left;
+            } else {
+                preprevious->right = current->right;
+            }
+        } else {
+            if (current->right == current) {
+                preprevious->left = current->left;
+            } else {
+                preprevious->left = current->right;
+            }
+        }
+        free(current);
+        current = NULL;
+        return true;
+    }
+    
+    Node* delete_node = previous;
+    Node* back_delete_node = current;
+    Node* parent_node = preprevious;
+    Node* child_node = *root;
+    current = (*root)->left;
+
+    while (current->index > child_node->index) {
+        child_node = current;
+        if (CheckIndex(delete_node->name, current->index)) {
+            current = current->right;
+        } else {
+            current = current->left;
+        }
+    }
+
+    if (child_node->right == delete_node) {
+        child_node->right = back_delete_node;
+    } else {
+        child_node->left = back_delete_node;
+    }
+
+    if (parent_node->right == delete_node) {
+        if (CheckIndex(child_node->name, delete_node->index)) {
+            parent_node->right = delete_node->right;
+        } else {
+            parent_node->right = delete_node->left;
+        }
+    } else {
+        if (CheckIndex(child_node->name, delete_node->index)) {
+            parent_node->left = delete_node->right;
+        } else {
+            parent_node->left = delete_node->left;
+        }
+    }
+
+    back_delete_node->name = delete_node->name;
+    back_delete_node->value = delete_node->value;
+
+    free(delete_node);
+    delete_node = NULL;
+
+    return true;
 }
 
 
@@ -111,7 +199,6 @@ int CheckIndex(char* name, int index) {
     if (index == -1) {
         return 0;
     }
-
     int symbol = name[index / 7];
     return (symbol >> (6 - index % 7)) & 1;
 }
@@ -130,6 +217,14 @@ int CompareNames(char* first, char* second) {
 
 
 Node* FindVariant(Node* root, char* name) {
+    if (StringLower(name) == -1) {
+        return NULL;
+    }
+
+    if (root == NULL) {
+        return NULL;
+    }
+
     Node* current = root->left;
     int previous_index = -1;
 
@@ -146,6 +241,9 @@ Node* FindVariant(Node* root, char* name) {
 
 
 void Clear(Node* root, int previous_index) {
+    if (root == NULL) {
+        return;
+    }
     if (root->index > previous_index) {
         Clear(root->left, root->index);
         Clear(root->right, root->index);
@@ -155,9 +253,9 @@ void Clear(Node* root, int previous_index) {
 }
 
 
-void SaveInFile(Node* current, ofstream &file) {
+void SaveInFile(Node* current, ofstream& file) {
     if (!file) {
-        perror("ERROR");
+        return;
     }
     if (current == NULL) {
         return;
@@ -177,9 +275,11 @@ void SaveInFile(Node* current, ofstream &file) {
 }
 
 
-void LoadFromFile(Node** root, ifstream &file) {
+void LoadFromFile(Node** root, ifstream& file) {
     if (!file) {
-        perror("ERROR");
+        Clear(*root, -2);
+        *root = NULL;
+        return;
     }
     Clear(*root, -2);
     *root = NULL;
@@ -214,7 +314,7 @@ void PrintNode(Node* node) {
         printf("%s", bin);
     }
     printf(" \t");
-    printf("index: %d\tvalue: %lld\n", node->index, node->value);
+    printf("index: %d\tvalue: %llu\n", node->index, node->value);
     printf("\tleft: %s\t\tright: %s\n", node->left->name, node->right->name);
 }
 

@@ -19,12 +19,23 @@ int main() {
             strcpy(input_name, name);
             input_name[strlen(name)] = '\0';
 
-            AddVariant(&root, input_name, value);
+            int result = AddVariant(&root, input_name, value);
+            if (result == 0) {
+                printf("OK\n");
+            } else if (result == 1) {
+                printf("ERROR: wrong name\n");
+            } else if (result == 2) {
+                printf("Exist\n");
+            }
         }
         else if (input[0] == '-') {
             cin >> name;
 
-            RemoveVariant(&root, name);
+            if(RemoveVariant(&root, name)) {
+                printf("OK\n");
+            } else {
+                printf("NoSuchWord\n");
+            }
         }
         else if (input[0] == '!') {
             char command[10];
@@ -37,6 +48,7 @@ int main() {
                 ofstream file(filename, ios::binary);
                 SaveInFile(root, file);
                 file.close();
+                printf("OK\n");
             }
             else if (strcmp(command, "Load") == 0) {
                 char filename[100];
@@ -45,6 +57,7 @@ int main() {
                 ifstream file(filename, ios::binary);
                 LoadFromFile(&root, file);
                 file.close();
+                printf("OK\n");
             } 
             else {
                 printf("ERROR ! cmd\n");
@@ -52,13 +65,14 @@ int main() {
         }
         else {
             Node* find = FindVariant(root, input);
-            
-            if (strcmp(find->name, input) == 0) {
-                printf("%lld\n", find->value);
+
+            if (find != NULL && strcmp(find->name, input) == 0) {
+                printf("OK: %llu\n", find->value);
             } else {
-                printf("dont find\n");
+                printf("NoSuchWord\n");
             }
         }
+        // PrintPatricia(root, -2);
     }
     Clear(root, -2);
     return 0;

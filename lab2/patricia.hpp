@@ -12,15 +12,14 @@ struct Node {
 
 
 int StringLower(char* string);
-void AddVariant(Node** root, char* name, unsigned long long value);
+int AddVariant(Node** root, char* name, unsigned long long value);
 bool RemoveVariant(Node** root, char* name);
 void Convertation(char* bin, int dec);
 int CheckIndex(char* name, int index);
 int CompareNames(char* first, char* second);
 Node* FindVariant(Node* root, char* name);
-void PrintNode(Node *node);
+void PrintNode(Node* node);
 void PrintPatricia(Node* root, int previous_index);
 void Clear(Node* root, int previous_index);
-void SaveInFile(Node* root, char* filename);
-void SaveInFile(Node* root, ofstream &file);
-void LoadFromFile(Node** root, ifstream &file);
+void SaveInFile(Node* root, ofstream& file);
+void LoadFromFile(Node** root, ifstream& file);
