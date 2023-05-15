@@ -16,7 +16,7 @@ public:
     void Add(char symbol) {
         if (size == capacity - 1) {
             capacity *= 2;
-            string = (char*)realloc(string, capacity);
+            string = (char*)realloc(string, capacity * sizeof(char));
         }
         string[size] = symbol;
         ++size;
@@ -49,6 +49,29 @@ ostream& operator<<(ostream& os, const String& line) {
 }
 
 
+class Vector {
+    char** string = (char**)malloc(2 * sizeof(char*));
+    int capacity = 2;
+    int size = 0;
+public:
+    char*& operator[](int index) {
+        return string[index];
+    }
+
+    void Add(char* symbol) {
+        if (size == capacity - 1) {
+            capacity *= 2;
+            string = (char**)realloc(string, capacity * sizeof(char*));
+        }
+        string[size] = symbol;
+        ++size;
+    }
+
+    int Size() {
+        return size;
+    }
+};
+
 String Input() {
     char symbol = getchar();
     String result;
@@ -74,33 +97,24 @@ int Split(String input, int& count_lines) {
 }
 
 
-void ParseInput(String input, char**& patterns, int& count_patterns, char**& text, int& text_size) {
-    count_patterns = 0;
+void ParseInput(String input, Vector& patterns, Vector& text) {
+    int count_patterns = 0;
     int empty_string_index = Split(input, count_patterns);
     if (empty_string_index == -1) {
         count_patterns = 1;
     }
 
     char* input_string = input.GetString();
-    patterns = (char**)malloc(sizeof(char*) * count_patterns);
     char* current_pattern = strtok(input_string, "\n");
-    patterns[0] = current_pattern;
+    patterns.Add(current_pattern);
     for (int i = 1; i < count_patterns; ++i) {
         current_pattern = strtok(NULL, "\n");
-        patterns[i] = current_pattern;
+        patterns.Add(current_pattern);
     }
 
-    text = (char**)malloc(sizeof(char*) * 2);
-    int capacity = 2;
-    text_size = 0;
     char* current_word = strtok(NULL, " \t\n");
     while (current_word != NULL) {
-        if (text_size == capacity - 1) {
-            capacity *= 2;
-            text = (char**)realloc(text, sizeof(char*) * capacity);
-        }
-        text[text_size] = current_word;
-        ++text_size;
+        text.Add(current_word);
         current_word = strtok(NULL, " \t\n");
     }
 }
@@ -111,18 +125,17 @@ void ParsePatterns(char** patterns, int count_patterns) {
 
 int main() {
     String input = Input();
-    char** patterns;
-    char** text;
+    Vector patterns;
+    Vector text;
     int count_patterns, text_size;
-    ParseInput(input, patterns, count_patterns, text, text_size);
+    ParseInput(input, patterns, text);
 
-    for (int i = 0; i < count_patterns; ++i) {
+    for (int i = 0; i < patterns.Size(); ++i) {
         printf("%d pattern: %s\n", i + 1, patterns[i]);
     }
-    for (int i =0; i < text_size; ++i) {
+    for (int i = 0; i < text.Size(); ++i) {
         printf("%d word: %s\n", i + 1, text[i]);
     }
-
 
     return 0;
 }
