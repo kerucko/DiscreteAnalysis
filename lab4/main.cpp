@@ -74,15 +74,15 @@ int Split(String input, int& count_lines) {
 }
 
 
-void ParseInput(String input) {
-    int count_patterns = 0;
+void ParseInput(String input, char**& patterns, int& count_patterns, char**& text, int& text_size) {
+    count_patterns = 0;
     int empty_string_index = Split(input, count_patterns);
     if (empty_string_index == -1) {
         count_patterns = 1;
     }
 
     char* input_string = input.GetString();
-    char** patterns = (char**)malloc(sizeof(char*) * count_patterns);
+    patterns = (char**)malloc(sizeof(char*) * count_patterns);
     char* current_pattern = strtok(input_string, "\n");
     patterns[0] = current_pattern;
     for (int i = 1; i < count_patterns; ++i) {
@@ -90,9 +90,9 @@ void ParseInput(String input) {
         patterns[i] = current_pattern;
     }
 
-    char ** text = (char**)malloc(sizeof(char*) * 2);
+    text = (char**)malloc(sizeof(char*) * 2);
     int capacity = 2;
-    int text_size = 0;
+    text_size = 0;
     char* current_word = strtok(NULL, " \t\n");
     while (current_word != NULL) {
         if (text_size == capacity - 1) {
@@ -105,10 +105,24 @@ void ParseInput(String input) {
     }
 }
 
+void ParsePatterns(char** patterns, int count_patterns) {
+    
+}
 
 int main() {
     String input = Input();
-    // cout << input << endl;
-    ParseInput(input);
+    char** patterns;
+    char** text;
+    int count_patterns, text_size;
+    ParseInput(input, patterns, count_patterns, text, text_size);
+
+    for (int i = 0; i < count_patterns; ++i) {
+        printf("%d pattern: %s\n", i + 1, patterns[i]);
+    }
+    for (int i =0; i < text_size; ++i) {
+        printf("%d word: %s\n", i + 1, text[i]);
+    }
+
+
     return 0;
 }
