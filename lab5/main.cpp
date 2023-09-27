@@ -40,6 +40,13 @@ private:
         return node->end - node->start + 1;
     }
 
+    int prefixLength(Node* node) {
+        if (node == root) {
+            return  0;
+        }
+        return nodeSize(node) + prefixLength(node->previous);
+    }
+
     void Add(int index) {
         lastAddedNode = nullptr;
         ++globalEnd;
@@ -111,14 +118,9 @@ private:
             }
             cout << pattern.substr(node->start, nodeSize(node)) << "[" << node->start << ", " << node->start + nodeSize(node) - 1 << "] sl: ";
             if (node->suffixLink == root) {
-                cout << "root; prev: ";
+                cout << "root; pl: " << prefixLength(node) << "\n";
             } else {
-                cout << pattern.substr(node->suffixLink->start, nodeSize(node->suffixLink)) << "[" << node->suffixLink->start << ", " << node->suffixLink->start + nodeSize(node->suffixLink) - 1 << "]; prev: ";
-            }
-            if (node->previous == root) {
-                cout << "root\n";
-            } else {
-                cout << pattern.substr(node->previous->start, nodeSize(node->previous)) << "[" << node->previous->start << ", " << node->previous->start + nodeSize(node->previous) - 1 << "]\n";
+                cout << pattern.substr(node->suffixLink->start, nodeSize(node->suffixLink)) << "[" << node->suffixLink->start << ", " << node->suffixLink->start + nodeSize(node->suffixLink) - 1 << "]; pl: " << prefixLength(node) << "\n";
             }
         } else {
             cout << "root\n";
@@ -132,6 +134,8 @@ public:
     explicit SuffixTree(const string& inputPattern) {
         pattern = inputPattern + "$";
         root = new Node(0, 0, false, root, root);
+        root->previous = root;
+        root->suffixLink = root;
         activeNode = root;
         lastAddedNode = nullptr;
         for (int i = 0; i < pattern.size(); i++) {
@@ -151,12 +155,15 @@ public:
         Node* currentNode = root;
         int compareIndex = 0;
         int wordIndex = 0;
+        int shift = 0;
         bool back = false;
 
         for (int i = 1; i < text.size(); i++) {
+            wordIndex = i;
             cout << "\n{NEXT " << i << " " << text[i] << "}";
-            
-            if (back && currentNode != root) {
+
+            back = true;
+            if (back) {
                 currentNode = currentNode->previous;
                 back = false;
                 if (currentNode == root) {
@@ -173,16 +180,59 @@ public:
                 } else {
                     cout << "\t{MOVE SL: " << pattern.substr(currentNode->start, nodeSize(currentNode)) << "[" << currentNode->start << ", " << currentNode->start + nodeSize(currentNode) - 1 << "]}";
                 }
+
+                if (currentNode != root) {
+                    int delta = 0;
+                    cout << "\n";
+                    while (delta < compareIndex) {
+                        if (compareIndex - delta <= nodeSize(currentNode)) {
+                            shift = compareIndex - delta;
+                            wordIndex += compareIndex;
+                            delta = compareIndex;
+                            cout << delta << " ci\n";
+                        } else {
+                            delta += nodeSize(currentNode);
+                            cout << delta << " ns\n";
+                            currentNode = currentNode->next[text[i + delta]];
+                        }
+                    }
+
+                    bool flag = false;
+                    result[i] = result[i - 1] - 1;
+                    for (compareIndex = shift;  compareIndex + wordIndex < text.size() && compareIndex < nodeSize(currentNode); compareIndex++) {
+                        if (text[compareIndex + wordIndex] != pattern[currentNode->start + compareIndex]) {
+                            flag = true;
+                            break;
+                        } else {
+                            result[i]++;
+                        }
+                    }
+//                    result[i] += compareIndex;
+                    if (flag) {
+                        cout << "\t{BACK ci: " << compareIndex << "}";
+                        back = true;
+                        break;
+                    } else {
+                        if (compareIndex + wordIndex == text.size()) {
+                            cout << "\t{END TEXT}";
+                            if (compareIndex < nodeSize(currentNode)) {
+                                back = true;
+                            }
+                            break;
+                        }
+                        if (compareIndex == nodeSize(currentNode)) {
+                            cout << "\t{END NODE}";
+                            wordIndex += compareIndex;
+                        }
+                    }
+                }
             }
 
-            // Добавить пропуск проверенных букв на предыдущем шаге
-
-            wordIndex = i;
-            if (currentNode != root && result[i-1] > 1) {
-                wordIndex++;
-                result[i]++;
-                cout << "\n{wi++: " << wordIndex << " " << text[wordIndex] << "}";
-            }
+//            if (currentNode != root && result[i-1] > 1) {
+//                wordIndex++;
+//                result[i]++;
+//                cout << "\n{wi++: " << wordIndex << " " << text[wordIndex] << "}";
+//            }
             // compareIndex = result[i - 1] - 1;
             while (wordIndex < text.size()) {
                 if (currentNode == root) {
@@ -233,8 +283,72 @@ public:
         return result;
     }
 
+    vector<int> Find1(string text) {
+        text = "$" + text;
+        vector<int> result(text.size(), 0);
+
+        Node *currentNode = root;
+        int prevStart = 0;
+        int compareIndex = 0;
+        int wordIndex = 0;
+
+        for (int i = 1; i < text.size(); i++) {
+            wordIndex = i;
+            currentNode = currentNode->previous;
+
+            if (currentNode != root) {
+                currentNode = currentNode->suffixLink;
+                if (compareIndex > 0) {
+                    currentNode = currentNode->next[pattern[prevStart]];
+                }
+            } else {
+                compareIndex = 0;
+            }
+
+            while (wordIndex < text.size()) {
+                if (currentNode == root) {
+                    if (currentNode->next.find(text[wordIndex]) != currentNode->next.end()) {
+                        compareIndex = 0;
+                        currentNode = currentNode->next[text[wordIndex]];
+                    } else {
+                        break;
+                    }
+                }
+
+                bool flag = false;
+                for (compareIndex; compareIndex + wordIndex < text.size() && compareIndex < nodeSize(currentNode); compareIndex++) {
+                    if (text[compareIndex + wordIndex] != pattern[currentNode->start + compareIndex]) {
+                        flag = true;
+                        break;
+                    }
+                }
+
+                prevStart = currentNode->start;
+                if (flag) {
+                    break;
+                } else {
+                    if (compareIndex + wordIndex >= text.size()) {
+                        break;
+                    }
+                    if (compareIndex >= nodeSize(currentNode)) {
+                        wordIndex += compareIndex;
+
+                        if (currentNode->next.find(text[wordIndex]) != currentNode->next.end()) {
+                            compareIndex = 0;
+                            currentNode = currentNode->next[text[wordIndex]];
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+            result[i] += prefixLength(currentNode->previous) + compareIndex;
+        }
+
+        return result;
+    }
+
     void Print() {
-        cout << "\n";
         PrintNode(root, 0);
         cout << "\n";
     }
@@ -242,12 +356,14 @@ public:
 
 int main() {
     string text, pattern;
+//    text = "aobbaoababba";
+//    pattern = "baobab";
     cin >> pattern >> text;
     cout << "text: " << text << "\npattern: " << pattern << "; size:" << pattern.size() << "\n";
 
     SuffixTree tree(pattern);
     tree.Print();
-    vector<int> result = tree.Find(text);
+    vector<int> result = tree.Find1(text);
     cout << "\n";
     for (int i = 1; i < result.size(); i++) {
         cout << result[i] << " ";
