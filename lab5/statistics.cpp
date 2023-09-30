@@ -228,21 +228,16 @@ public:
 int main() {
     string text, pattern;
     cin >> pattern >> text;
-//    text = "aababbababbbbbaaaababbabaaabaa";
-//    pattern = "bba";
-//    cout << "text: " << text << "; size:" << text.size() << "\npattern: " << pattern << "; size:" << pattern.size() << "\n";
 
     SuffixTree tree(pattern);
 //    tree.Print();
     vector<int> result = tree.Find(text);
-//    cout << "\n";
+
     for (int i = 1; i < result.size(); i++) {
-//        cout << result[i] << " ";
          if (result[i] == pattern.size()) {
              cout << i << "\n";
          }
     }
-//    cout << "\n";
 
     return 0;
 }
