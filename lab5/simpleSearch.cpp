@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 using namespace std;
 
@@ -24,7 +25,7 @@ private:
         }
     };
 
-    string pattern;
+    string text;
     Node* root;
     Node* lastAddedNode;
     Node* activeNode;
@@ -57,8 +58,8 @@ private:
                 activeEdge = index;
             }
 
-            if (activeNode->next.find(pattern[activeEdge]) != activeNode->next.end()) {
-                Node* nextNode = activeNode->next[pattern[activeEdge]];
+            if (activeNode->next.find(text[activeEdge]) != activeNode->next.end()) {
+                Node* nextNode = activeNode->next[text[activeEdge]];
 
                 if (activeLength >= nodeSize(nextNode)) {
                     activeEdge += nodeSize(nextNode);
@@ -67,7 +68,7 @@ private:
                     continue;
                 }
 
-                if (pattern[nextNode->start + activeLength] == pattern[index]) {
+                if (text[nextNode->start + activeLength] == text[index]) {
                     if (activeNode != root) {
                         if (lastAddedNode != nullptr) {
                             lastAddedNode->suffixLink = activeNode;
@@ -79,12 +80,12 @@ private:
                 }
 
                 Node* newNode = new Node(nextNode->start, nextNode->start + activeLength - 1, false, root, activeNode);
-                activeNode->next[pattern[activeEdge]] = newNode;
+                activeNode->next[text[activeEdge]] = newNode;
                 nextNode->start += activeLength;
 
-                newNode->next[pattern[nextNode->start]] = nextNode;
+                newNode->next[text[nextNode->start]] = nextNode;
                 nextNode->previous = newNode;
-                newNode->next[pattern[index]] = new Node(index, globalEnd, true, root, newNode);
+                newNode->next[text[index]] = new Node(index, globalEnd, true, root, newNode);
                 if (lastAddedNode != nullptr) {
                     lastAddedNode->suffixLink = newNode;
                     lastAddedNode = nullptr;
@@ -92,7 +93,7 @@ private:
                 lastAddedNode = newNode;
             } else {
                 Node* newNode = new Node(index, globalEnd, true, root, activeNode);
-                activeNode->next[pattern[activeEdge]] = newNode;
+                activeNode->next[text[activeEdge]] = newNode;
                 if (lastAddedNode != nullptr) {
                     lastAddedNode->suffixLink = activeNode;
                     lastAddedNode = nullptr;
@@ -116,11 +117,12 @@ private:
             for (int i = 0; i < length; i++) {
                 cout << "\t|";
             }
-            cout << pattern.substr(node->start, nodeSize(node)) << "[" << node->start << ", " << node->start + nodeSize(node) - 1 << "] sl: ";
+            cout << text.substr(node->start, nodeSize(node)) << "[" << node->start << ", " << node->start + nodeSize(node) - 1 << "] sl: ";
             if (node->suffixLink == root) {
                 cout << "root; pl: " << prefixLength(node) << "\n";
             } else {
-                cout << pattern.substr(node->suffixLink->start, nodeSize(node->suffixLink)) << "[" << node->suffixLink->start << ", " << node->suffixLink->start + nodeSize(node->suffixLink) - 1 << "]; pl: " << prefixLength(node) << "\n";
+                cout << text.substr(node->suffixLink->start, nodeSize(node->suffixLink)) << "[" << node->suffixLink->start << ", ";
+                cout << node->suffixLink->start + nodeSize(node->suffixLink) - 1 << "]; l: " << prefixLength(node) << "\n";
             }
         } else {
             cout << "root\n";
@@ -129,81 +131,75 @@ private:
             PrintNode(x.second, length + 1);
         }
     }
+
+    void fixSuffixLink(Node* node) {
+        if (node->suffixLink == node->previous) {
+            node->suffixLink = root;
+        }
+        for (auto& x: node->next) {
+            fixSuffixLink(x.second);
+        }
+    }
+
+    void AddResult(vector<int>* result, Node* node) {
+        if (node->next.size() == 0) {
+            result->push_back(node->start - prefixLength(node->previous));
+        }
+        for (auto& x: node->next) {
+            AddResult(result, x.second);
+        }
+    }
 public:
 
-    explicit SuffixTree(const string& inputPattern) {
-        pattern = inputPattern + "$";
+    explicit SuffixTree(const string& inputText) {
+        text = inputText + "$";
         root = new Node(0, 0, false, root, root);
         root->previous = root;
         root->suffixLink = root;
         activeNode = root;
         lastAddedNode = nullptr;
-        for (int i = 0; i < pattern.size(); i++) {
+        for (int i = 0; i < text.size(); i++) {
             Add(i);
         }
+        fixSuffixLink(root);
     }
 
-    vector<int> Find(string text) {
-        text = "$" + text;
-        vector<int> result(text.size(), 0);
+    vector<int> Find(string pattern) {
+        vector<int> result;
 
-        Node *currentNode = root;
-        int prevStart = 0;
-        int compareIndex = 0;
+        Node* currentNode = root;
         int wordIndex = 0;
+        int compareIndex = 0;
+        bool flag = false;
 
-        for (int i = 1; i < text.size(); i++) {
-            wordIndex = i;
-            currentNode = currentNode->previous;
-
-            if (currentNode != root) {
-                currentNode = currentNode->suffixLink;
-                if (compareIndex > 0) {
-                    currentNode = currentNode->next[pattern[prevStart]];
-                }
+        while (wordIndex < pattern.size()) {
+            if (currentNode->next.find(pattern[wordIndex]) == currentNode->next.end()) {
+                return result;
             } else {
-                compareIndex = 0;
+                currentNode = currentNode->next[pattern[wordIndex]];
             }
 
-            while (wordIndex < text.size()) {
-                if (currentNode == root) {
-                    if (currentNode->next.find(text[wordIndex]) != currentNode->next.end()) {
-                        compareIndex = 0;
-                        currentNode = currentNode->next[text[wordIndex]];
-                    } else {
-                        break;
-                    }
-                }
-
-                bool flag = false;
-                for (compareIndex; compareIndex + wordIndex < text.size() && compareIndex < nodeSize(currentNode); compareIndex++) {
-                    if (text[compareIndex + wordIndex] != pattern[currentNode->start + compareIndex]) {
-                        flag = true;
-                        break;
-                    }
-                }
-
-                prevStart = currentNode->start;
-                if (flag) {
+            flag = false;
+            for (compareIndex = 0; compareIndex + wordIndex < pattern.size() && compareIndex < nodeSize(currentNode); compareIndex++) {
+                if (pattern[compareIndex + wordIndex] != text[currentNode->start + compareIndex]) {
+                    flag = true;
                     break;
-                } else {
-                    if (compareIndex + wordIndex >= text.size()) {
-                        break;
-                    }
-                    if (compareIndex >= nodeSize(currentNode)) {
-                        wordIndex += compareIndex;
-
-                        if (currentNode->next.find(text[wordIndex]) != currentNode->next.end()) {
-                            compareIndex = 0;
-                            currentNode = currentNode->next[text[wordIndex]];
-                        } else {
-                            break;
-                        }
-                    }
                 }
             }
-            result[i] += prefixLength(currentNode->previous) + compareIndex;
+
+            if (flag) {
+                return result;
+            } else {
+                if (compareIndex + wordIndex == pattern.size()) {
+                    break;
+                }
+                if (compareIndex == nodeSize(currentNode)) {
+                    wordIndex += compareIndex;
+                }
+            }
         }
+        AddResult(&result, currentNode);
+        sort(result.begin(), result.end());
 
         return result;
     }
@@ -216,22 +212,25 @@ public:
 
 int main() {
     string text, pattern;
-//    text = "aobbaoababba";
-//    pattern = "baobab";
-    cin >> pattern >> text;
-    cout << "text: " << text << "\npattern: " << pattern << "; size:" << pattern.size() << "\n";
+    cin >> text;
 
-    SuffixTree tree(pattern);
-    tree.Print();
-    vector<int> result = tree.Find(text);
-    cout << "\n";
-    for (int i = 1; i < result.size(); i++) {
-        cout << result[i] << " ";
-//         if (result[i] == pattern.size()) {
-//             cout << i << "\n";
-//         }
+    SuffixTree tree(text);
+
+    int count = 1;
+    while (cin >> pattern) {
+        vector<int> result =  tree.Find(pattern);
+        if (result.size() > 0) {
+            cout << count << ": ";
+            for (int i = 0; i < result.size(); i++) {
+                cout << result[i] + 1;
+                if (i != result.size() - 1) {
+                    cout << ", ";
+                } else {
+                    cout << "\n";
+                }
+            }
+        }
+        count++;
     }
-    cout << "\n";
-
     return 0;
 }
