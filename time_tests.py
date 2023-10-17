@@ -24,9 +24,9 @@ def printProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=
         print()
 
 
-os.system('g++ all.cpp')
-tests = 9
-n = 5
+os.system('g++ simpleSearch.cpp')
+tests = 12
+n = 7
 res = [0] * tests
 
 count = 0
@@ -40,8 +40,8 @@ for i in range(1, tests + 1):
         os.system(f'./a.out < test{i}.txt >> output.txt')
         end_time = datetime.now()
         delta = end_time - start_time
-        sum += delta.seconds
+        sum += delta.microseconds
         os.system('rm output.txt')
     res[i - 1] = sum / n
 
-print(res)
+print(*res, sep='\n')

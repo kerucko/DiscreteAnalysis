@@ -213,6 +213,8 @@ public:
 int main() {
     string text, pattern;
     cin >> text;
+    int n;
+    cin >> n;
 
     SuffixTree tree(text);
 
